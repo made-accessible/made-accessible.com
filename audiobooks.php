@@ -87,6 +87,8 @@ function render($results)
 			//var_dump($result);
 			echo '<a href="?download='
 						, $result->identifier
+						, '&amp;title='
+						, urlencode($result->title)
 						, '">';
 			echo '<var>',$result->title,'</var>';
 			echo '</a>';
@@ -143,11 +145,17 @@ function download($identifier)
 //	}
 	if( count($mp3_files) )
 	{
+		$replacement_title =
+			$_REQUEST['title']
+			? $_REQUEST['title']
+			: 'Untitled'
+		;
+
 		echo "<h2>mp3 files to download</h2>";
 		echo "<ol id='mp3-files'>";
 		foreach( $mp3_files as $file )
 		{
-			$title = $file->title ? $file->title : 'Untitled';
+			$title = $file->title ? $file->title : $replacement_title;
 			//echo "$base_url{$file[name]}\n";
 			echo "<li><a href='$base_url{$file[name]}'>$title</a></li>";
 		}
