@@ -48,10 +48,18 @@ function search($terms)
 	$results = array();
 	$total = 0;
 
+	$rows = (integer)$_REQUEST['rows'];
+	$last_result = (integer)$_REQUEST['last'];
+
+	if( !$rows ) {
+		$rows = 5;
+		$last_result = 5;
+	}
+
 	// ask librivox for results
 	$search_params = array(
 		'q' => '('.$terms.') AND format:MP3',
-		'rows' => 5,
+		'rows' => $rows,
 		'fl' => array('identifier','creator','title','subject'),
 		'fmt' => 'json',
 		'xmlsearch' => 'Search'
@@ -65,25 +73,34 @@ function search($terms)
 
 	$total = $page->response->numFound;
 	$results = $page->response->docs;
+	$results_remaining = ($total - count($results));
 ?>
 <h2>For
 <var
 	title="<?php echo htmlspecialchars($page->responseHeader->params->q) ?>">
 <?php echo $terms ?></var>,
 showing <var><?php echo count($results) ?></var>
-results<?php if( $total != count($results) ) echo ' out of <var>', $total, '</var>' ?>.
+results<?php if( $results_remaining ) echo ' out of <var>', $total, '</var>' ?>.
 </h2>
 <ol id="results">
-	<?php render($results) ?>
+	<?php render($results, $last_result) ?>
 </ol>
+<?php
+	if( $results_remaining ) {
+		$next = (($results_remaining < 5) ? $results_remaining : 5);
+		echo '<p><a href="?terms='.urlencode($terms).'&amp;rows='.($rows+$next).'&amp;last='.$rows.'#next">Next '.$next.' results</a></p>';
+	}
+?>
 <?php
 }
 
-function render($results)
+function render($results, $last = null)
 {
-	foreach($results as $result)
+	foreach($results as $index => $result)
 	{
-		echo '<li>';
+		$id = ($last == $index) ? ' id="next"' : '';
+
+		echo "<li$id>";
 			//var_dump($result);
 			echo '<a href="?download='
 						, $result->identifier
@@ -98,7 +115,7 @@ function render($results)
 				echo '<var>',$result->creator[0],'</var>';
 				if( count($result->creator) > 1 ) echo '...';
 			}
-		echo '</li>';
+		echo '</li>'."\n";
 	}
 }
 
