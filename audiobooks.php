@@ -102,6 +102,17 @@ function render($results)
 	}
 }
 
+function file_order( $a, $b )
+{
+	return
+		($a->track && $b->track)
+		? ($a->track - $b->track)
+		: ($a->title && $a->title != $b->title)
+			? strcasecmp($a->title, $b->title)
+			: strnatcasecmp($a->name, $b->name)
+	;
+}
+
 function download($identifier)
 {
 	$base_url = "http://www.archive.org/download/$identifier/";
@@ -131,13 +142,7 @@ function download($identifier)
 
 //	echo '</pre>';
 
-	usort( $mp3_files, create_function( '$a,$b', '
-		return
-			($a->track && $b->track)
-			? ($a->track - $b->track)
-			: stricmp($a->title, $b->title)
-		;
-	' ) );
+	usort( $mp3_files, 'file_order' );
 
 //	if( count($original_files) == 1 )
 //	{
