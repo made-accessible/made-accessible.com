@@ -1,7 +1,3 @@
-<?php
-if( $download = trim($_REQUEST['download']) )
-	download($download);
-?>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 	<title>Audio Book Search</title>
@@ -10,7 +6,16 @@ if( $download = trim($_REQUEST['download']) )
 <body>
 <?php
 
-// force use of local proxy by underlying HTTP API requests
+// ---
+// Copyright © 2008 made-accessible.com
+// Author: Paul Mitchell and Lucy Buykx <geeks@made-accessible.com>
+// Licence: Creative Commons (Attribution, Share-alike)
+//
+// Anyone is free to use, examine and adapt this software, for any purpose,
+// so long as the original authors are credited and modifications are shared.
+// ---
+
+// uncomment to force use of local proxy by underlying HTTP API requests
 
 libxml_set_streams_context(
 	stream_context_get_default(	array(
@@ -21,7 +26,10 @@ libxml_set_streams_context(
 	)	)
 );
 
-// Present form for searching Librivox
+if( $download = trim($_REQUEST['download']) )
+	download($download);
+
+// Present form for searching catalogue
 
 if( !($terms = trim($_REQUEST['terms'])) )
 	form();
@@ -56,7 +64,7 @@ function search($terms)
 		$last_result = 5;
 	}
 
-	// ask librivox for results
+	// ask Internet Archive for results
 	$search_params = array(
 		'q' => '('.$terms.') AND format:MP3',
 		'rows' => $rows,
@@ -90,8 +98,6 @@ results<?php if( $results_remaining ) echo ' out of <var>', $total, '</var>' ?>.
 		$next = (($results_remaining < 5) ? $results_remaining : 5);
 		echo '<p><a href="?terms='.urlencode($terms).'&amp;rows='.($rows+$next).'&amp;last='.$rows.'#next">Next '.$next.' results</a></p>';
 	}
-?>
-<?php
 }
 
 function render($results, $last = null)
@@ -101,7 +107,6 @@ function render($results, $last = null)
 		$id = ($last == $index) ? ' id="next"' : '';
 
 		echo "<li$id>";
-			//var_dump($result);
 			echo '<a href="?download='
 						, $result->identifier
 						, '&amp;title='
@@ -140,33 +145,32 @@ function download($identifier)
 	, true
 	);
 
-	$xpaths = array(
-		// first, scan for original mp3 files
-		'file[@source="original" and (contains(format, "mp3") or contains(format, "MP3"))]'
-		// next, scan for 64kbps derivative mp3 files
-		, 'file[@source="derivative" and bitrate=64 and (contains(format, "mp3") or contains(format, "MP3"))]'
-	);
+	// prefer original mp3 files
+	$mp3_files = $files->xpath(
+		'file[
+			@source="original"
+			and
+			(contains(format, "mp3") or contains(format, "MP3"))
+		]'
+ 	);
 
-//	echo '<pre>';
-//	print_r($files);
+	if( empty($mp3_files) ) {
+		// fall back to 64kbps derivative mp3 files
+		$mp3_files = $files->xpath(
+			'file[
+				@source="derivative"
+				and
+				bitrate=64
+				and
+				(contains(format, "mp3") or contains(format, "MP3"))
+			]'
+		);
+	}
 
-	$mp3_files = $files->xpath( current($xpaths) );
-//	print_r( $mp3_files );
-
-	if( empty($mp3_files) )
-		$mp3_files = $files->xpath( next($xpaths) );
-//	print_r( $mp3_files );
-
-//	echo '</pre>';
-
-	usort( $mp3_files, 'file_order' );
-
-//	if( count($original_files) == 1 )
-//	{
-//		header( "Location: $base_url{$original_files[0][name]}" );
-//	}
 	if( count($mp3_files) )
 	{
+		usort( $mp3_files, 'file_order' );
+
 		$replacement_title =
 			$_REQUEST['title']
 			? $_REQUEST['title']
@@ -178,7 +182,7 @@ function download($identifier)
 		foreach( $mp3_files as $file )
 		{
 			$title = $file->title ? $file->title : $replacement_title;
-			//echo "$base_url{$file[name]}\n";
+
 			echo "<li><a href='$base_url{$file[name]}'>$title</a></li>";
 		}
 		echo "</ol>";
@@ -186,9 +190,7 @@ function download($identifier)
 	else
 	{
 		echo "<h2>No mp3 files found</h2>";
-		//var_dump($files);
 	}
-	die();
 }
 ?>
 </body>
