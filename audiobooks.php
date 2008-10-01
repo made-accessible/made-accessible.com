@@ -6,17 +6,18 @@
 <body>
 <?php
 
-// ---
-// Copyright © 2008 made-accessible.com
-// Author: Paul Mitchell and Lucy Buykx <geeks@made-accessible.com>
-// Licence: Creative Commons (Attribution, Share-alike)
+
+
+// Copyright © 2008 made-accessible.com Some rights reserved.
+// Creative Commons Attribution-Noncommercial-Share Alike 2.0 UK: England & Wales License
+// http://creativecommons.org/licenses/by-nc-sa/2.0/uk/
 //
-// Anyone is free to use, examine and adapt this software, for any purpose,
-// so long as the original authors are credited and modifications are shared.
-// ---
+// Authors: Paul Mitchell and Lucy Buykx <geeks@made-accessible.com>
+
+
 
 // uncomment to force use of local proxy by underlying HTTP API requests
-
+/*
 libxml_set_streams_context(
 	stream_context_get_default(	array(
 		'http' => array(
@@ -25,6 +26,8 @@ libxml_set_streams_context(
 		)
 	)	)
 );
+*/
+
 
 if( $download = trim($_REQUEST['download']) )
 	download($download);
